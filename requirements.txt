@@ -1,4 +1,6 @@
-yfinance
 streamlit
 numpy<=1.25.2
 pandas
+plotly
+matplotlib
+PIL
