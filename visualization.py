@@ -1,7 +1,113 @@
 # import module
 import streamlit as st
 import pandas as pd
-import helper_functions as hf
+# import helper_functions as hf
+import streamlit as st
+import numpy as np
+import pandas as pd
+
+# for visualization
+import plotly.express as px
+import plotly.io as pio
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+from PIL import Image
+
+import re
+import datetime as dt
+from sklearn.feature_extraction.text import CountVectorizer
+import plotly.express as px
+import plotly.io as pio
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+# from wordcloud import WordCloud
+from PIL import Image
+import sklearn
+# print(sklearn.__version__)
+
+def plot_sentiment(tweet_df):
+    # count the number tweets based on the sentiment
+    sentiment_count = tweet_df["polarity"].value_counts()
+
+    # plot the sentiment distribution in a pie chart
+    fig = px.pie(
+        values=sentiment_count.values,
+        names=sentiment_count.index,
+        hole=0.3,
+        title="<b>Sentiment Distribution</b>",
+        color=sentiment_count.index,
+        # set the color of positive to blue and negative to orange
+        color_discrete_map={"positive": "#1F77B4", "negative": "#D71313", "neutral": "#F94C10"},
+    )
+    fig.update_traces(
+        textposition="inside",
+        texttemplate="%{label}<br>%{value} (%{percent})",
+        hovertemplate="<b>%{label}</b><br>Percentage=%{percent}<br>Count=%{value}",
+    )
+    fig.update_layout(showlegend=False)
+    return fig
+
+def plot_wordcloud(tweet_df, colormap="Greens"):
+    stopwords = set(STOPWORDS)
+    for word in ['di', 'ya', 'ini', 'dan', 'ga', 'ke', 'aja', 'bgt', 'yang', 'yg', 'tapi', 'aku', 
+             'gua', 'gue', 'kalo', 'nya', 'itu', 'dah', 'sih', 'tp', 'ada', 'bisa', 'mau']:
+        stopwords.add(word)
+    cmap = mpl.cm.get_cmap(colormap)(np.linspace(0, 1, 20))
+    cmap = mpl.colors.ListedColormap(cmap[10:15])
+    mask = np.array(Image.open("twitter_mask.png"))
+    font = "quartzo.ttf"
+    text = " ".join(tweet_df["text_preprocessed"])
+    wc = WordCloud(
+        background_color="white",
+        stopwords=stopwords,
+        font_path=font,
+        max_words=90,
+        colormap=cmap,
+        mask=mask,
+        random_state=42,
+        collocations=False,
+        min_word_length=2,
+        max_font_size=200,
+    )
+    wc.generate(text)
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(1, 1, 1)
+    plt.imshow(wc, interpolation="bilinear")
+    plt.axis("off")
+    plt.title("Wordcloud", fontdict={"fontsize": 16}, fontweight="heavy", pad=20, y=1.0)
+    return fig
+
+def get_top_n_gram(tweet_df, ngram_range, n=10):
+    stopwords = set(STOPWORDS)
+    for word in ['di', 'ya', 'ini', 'dan', 'ga', 'ke', 'aja', 'bgt', 'yang', 'yg', 'tapi', 'aku', 
+             'gua', 'gue', 'kalo', 'nya', 'itu', 'dah', 'sih', 'tp', 'ada', 'bisa', 'mau', 'iya', 'wkwk']:
+        stopwords.add(word)
+    corpus = tweet_df["text_preprocessed"]
+    vectorizer = CountVectorizer(
+        analyzer="word", ngram_range=ngram_range, stop_words=stopwords
+    )
+    X = vectorizer.fit_transform(corpus.astype(str).values)
+    words = vectorizer.get_feature_names_out()
+    words_count = np.ravel(X.sum(axis=0))
+    df = pd.DataFrame(zip(words, words_count))
+    df.columns = ["words", "counts"]
+    df = df.sort_values(by="counts", ascending=False).head(n)
+    df["words"] = df["words"].str.title()
+    return df
+
+def plot_n_gram(n_gram_df, title, color="#54A24B"):
+    fig = px.bar(
+        x=n_gram_df.counts,
+        y=n_gram_df.words,
+        title="<b>{}</b>".format(title),
+        text_auto=True,
+    )
+    fig.update_layout(plot_bgcolor="white")
+    fig.update_xaxes(title=None)
+    fig.update_yaxes(autorange="reversed", title=None)
+    fig.update_traces(hovertemplate="<b>%{y}</b><br>Count=%{x}", marker_color=color)
+    return fig
 
 st.set_page_config(
     page_title="Twitter Sentiment Analyzer", page_icon="📊", layout="wide"
@@ -57,26 +163,26 @@ if "df" in st.session_state:
 
         col1, col2, col3, col4 = st.columns([25, 24, 24, 27])
         with col1:
-            sentiment_plot = hf.plot_sentiment(data)
+            sentiment_plot = plot_sentiment(data)
             sentiment_plot.update_layout(height=400, title_x=0.5)
             st.plotly_chart(sentiment_plot, theme=None, use_container_width=True)
         with col2:
-            top_unigram = hf.get_top_n_gram(data, ngram_range=(1, 1), n=10)
-            unigram_plot = hf.plot_n_gram(
+            top_unigram = get_top_n_gram(data, ngram_range=(1, 1), n=10)
+            unigram_plot = plot_n_gram(
                 top_unigram, title="Top 10 Occuring Words", color=bar_color
             )
             unigram_plot.update_layout(height=350)
             st.plotly_chart(unigram_plot, theme=None, use_container_width=True)
         with col3:
-            top_bigram = hf.get_top_n_gram(data, ngram_range=(2, 2), n=10)
-            bigram_plot = hf.plot_n_gram(
+            top_bigram = get_top_n_gram(data, ngram_range=(2, 2), n=10)
+            bigram_plot = plot_n_gram(
                 top_bigram, title="Top 10 Occuring Bigrams", color=bar_color
             )
             bigram_plot.update_layout(height=350)
             st.plotly_chart(bigram_plot, theme=None, use_container_width=True)
         with col4:
-            top_trigram = hf.get_top_n_gram(data, ngram_range=(3, 3), n=10)
-            bigram_plot = hf.plot_n_gram(
+            top_trigram = get_top_n_gram(data, ngram_range=(3, 3), n=10)
+            bigram_plot = plot_n_gram(
                 top_trigram, title="Top 10 Occuring Trigrams", color=bar_color
             )
             bigram_plot.update_layout(height=350)
@@ -100,7 +206,7 @@ if "df" in st.session_state:
                 height=350,
             )
         with col2:
-            wordcloud = hf.plot_wordcloud(data, colormap= wc_color)
+            wordcloud = plot_wordcloud(data, colormap= wc_color)
             st.pyplot(wordcloud)
 
     adjust_tab_font = """
