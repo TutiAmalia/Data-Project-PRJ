@@ -15,7 +15,7 @@ adjust_top_pad = """
 st.markdown(adjust_top_pad, unsafe_allow_html=True)
 
 # import data
-data = pd.read_csv('E:\COBA\sentimen-prj\Pengumpulan-Data\data_clean_polarity full.csv')
+data = pd.read_csv('data_clean_polarity full.csv')
 st.session_state.df = data
 # st.title("Analisis Sentimen Twitter")
 # st.header("Pekan Raya Jakarta")
