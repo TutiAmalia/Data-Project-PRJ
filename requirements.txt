@@ -5,6 +5,6 @@ numpy==1.25.2
 pandas==1.4.2
 matplotlib==3.7.1
 wordcloud==1.9.2
-Image==9.3.0
+# Image==9.3.0
 plotly_express==0.4.0
 # helper_function
