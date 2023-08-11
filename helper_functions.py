@@ -21,6 +21,13 @@ from PIL import Image
 import sklearn
 # print(sklearn.__version__)
 
+# Define custom Indonesian stopwords
+indonesian_stopwords = set([
+    'di', 'ya', 'ini', 'dan', 'ga', 'ke', 'aja', 'bgt', 'yang', 'yg',
+    'tapi', 'aku', 'gua', 'gue', 'kalo', 'nya', 'itu', 'dah', 'sih',
+    'tp', 'ada', 'bisa', 'mau', 'iya', 'wkwk'
+])
+
 def plot_sentiment(tweet_df):
     # count the number tweets based on the sentiment
     sentiment_count = tweet_df["polarity"].value_counts()
@@ -45,9 +52,7 @@ def plot_sentiment(tweet_df):
 
 def plot_wordcloud(tweet_df, colormap="Greens"):
     stopwords = set(STOPWORDS)
-    for word in ['di', 'ya', 'ini', 'dan', 'ga', 'ke', 'aja', 'bgt', 'yang', 'yg', 'tapi', 'aku', 
-             'gua', 'gue', 'kalo', 'nya', 'itu', 'dah', 'sih', 'tp', 'ada', 'bisa', 'mau']:
-        stopwords.add(word)
+    stopwords.update(indonesian_stopwords)
     cmap = mpl.cm.get_cmap(colormap)(np.linspace(0, 1, 20))
     cmap = mpl.colors.ListedColormap(cmap[10:15])
     mask = np.array(Image.open("twitter_mask.png"))
@@ -75,9 +80,7 @@ def plot_wordcloud(tweet_df, colormap="Greens"):
 
 def get_top_n_gram(tweet_df, ngram_range, n=10):
     stopwords = set(STOPWORDS)
-    for word in ['di', 'ya', 'ini', 'dan', 'ga', 'ke', 'aja', 'bgt', 'yang', 'yg', 'tapi', 'aku', 
-             'gua', 'gue', 'kalo', 'nya', 'itu', 'dah', 'sih', 'tp', 'ada', 'bisa', 'mau', 'iya', 'wkwk']:
-        stopwords.add(word)
+    stopwords.update(indonesian_stopwords)
     corpus = tweet_df["text_preprocessed"]
     vectorizer = CountVectorizer(
         analyzer="word", ngram_range=ngram_range, stop_words=stopwords
