@@ -53,8 +53,8 @@ def plot_sentiment(tweet_df):
 def plot_wordcloud(tweet_df, colormap="Greens"):
     stopwords = set(STOPWORDS)
     stopwords.update(indonesian_stopwords)
-    cmap = mpl.cm.get_cmap(colormap)(np.linspace(0, 1, 20))
-    cmap = mpl.colors.ListedColormap(cmap[10:15])
+    cmap = plt.cm.get_cmap(colormap)(np.linspace(0, 1, 20))
+    cmap = plt.colors.ListedColormap(cmap[10:15])
     mask = np.array(Image.open("twitter_mask.png"))
     font = "quartzo.ttf"
     text = " ".join(tweet_df["text_preprocessed"])
@@ -81,18 +81,19 @@ def plot_wordcloud(tweet_df, colormap="Greens"):
 def get_top_n_gram(tweet_df, ngram_range, n=10):
     stopwords = set(STOPWORDS)
     stopwords.update(indonesian_stopwords)
-    corpus = tweet_df["text_preprocessed"]
-    vectorizer = CountVectorizer(
-        analyzer="word", ngram_range=ngram_range, stop_words=stopwords
-    )
-    X = vectorizer.fit_transform(corpus.astype(str).values)
-    words = vectorizer.get_feature_names_out()
-    words_count = np.ravel(X.sum(axis=0))
-    df = pd.DataFrame(zip(words, words_count))
-    df.columns = ["words", "counts"]
-    df = df.sort_values(by="counts", ascending=False).head(n)
-    df["words"] = df["words"].str.title()
-    return df
+    # Split each preprocessed tweet into words
+    words_list = [tweet.split() for tweet in tweet_df["text_preprocessed"]]
+    # Flatten the list of lists into a single list of words
+    all_words = [word for words in words_list for word in words]
+    # Create a Pandas Series and count the word occurrences
+    word_counts = pd.Series(all_words).value_counts().reset_index()
+    word_counts.columns = ["words", "counts"]
+    # Filter out stopwords
+    word_counts = word_counts[~word_counts["words"].isin(stopwords)]
+    # Sort by counts and select the top n
+    top_n_gram = word_counts.head(n)
+    top_n_gram["words"] = top_n_gram["words"].str.title()
+    return top_n_gram
 
 def plot_n_gram(n_gram_df, title, color="#54A24B"):
     fig = px.bar(
