@@ -53,8 +53,8 @@ def plot_sentiment(tweet_df):
 def plot_wordcloud(tweet_df, colormap="Greens"):
     stopwords = set(STOPWORDS)
     stopwords.update(indonesian_stopwords)
-    cmap = plt.cm.get_cmap(colormap)(np.linspace(0, 1, 20))
-    cmap = plt.colors.ListedColormap(cmap[10:15])
+    cmap = mpl.cm.get_cmap(colormap)(np.linspace(0, 1, 20))
+    cmap = mpl.colors.ListedColormap(cmap[10:15])
     mask = np.array(Image.open("twitter_mask.png"))
     font = "quartzo.ttf"
     text = " ".join(tweet_df["text_preprocessed"])
